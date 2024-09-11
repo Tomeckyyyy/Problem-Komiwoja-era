@@ -12,3 +12,10 @@ for _ in range(1,30):
 
 list_index_points = [_ for _ in range(0, 6)]
 print(list_index_points)
+
+if 2:
+    print("1")
+elif True:
+    print("2")
+else:
+    print("l")
