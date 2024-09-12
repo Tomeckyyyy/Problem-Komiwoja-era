@@ -8,9 +8,9 @@ import generation
 # how_many_we_choose_the_best = input("Ilu najlepszych przekazujemy do tworzenia następnej generacji?")
 # mutation_probability = input("Jakie prawdopodobieństwo mutacji? (w procentach)")
 # number_of_generations = input("Jaka ma być maksymalna liczba generacji?")
-how_many_points = 13
+how_many_points = 6
 population_size = 100
-how_many_we_choose_the_best = 30
+how_many_we_choose_the_best = 6
 mutation_probability = 3
 number_of_generations = 10
 
@@ -18,13 +18,15 @@ number_of_generations = 10
 list_points = generation.generate_points_list(how_many_points)
 FIRST_POINT = list_points[0]
 LAST_POINT = list_points[len(list_points)-1]
-variables_in_the_list_points = list_points[1:len(list_points)]
+variables_in_the_list_points = list_points[1:len(list_points) - 1]
 
 # Generowanie pierwszej generacji
 listX = []
 listY = []
-first_generation = generation.FirstGeneration(variables_in_the_list_points, population_size).get_the_best_children()
-for single_first_generation in first_generation:
+first_generation = generation.FirstGeneration(variables_in_the_list_points, FIRST_POINT, LAST_POINT,
+                                              population_size, how_many_we_choose_the_best).get_the_best_children()
+for single_first_generation_with_evaluation in first_generation:
+    single_first_generation = single_first_generation_with_evaluation[0]
     for i in single_first_generation:
         listX.append(i.get_x())
         listY.append(i.get_y())

@@ -30,41 +30,53 @@ class Point:
 # Klasa, która reprezentuje pojedynczą próbę rozwiązania
 class SolutionExample:
     # Tworzenie instancji następuje przez stworzenie dziecka dwóch rodziców.
-    def __init__(self, variables_in_the_list_points: list, parent1: list, parent2: list, mutation_probability: int,
-                 first_point, last_point):
-        self.child: list = [_ for _ in range(0, len(variables_in_the_list_points))]
-        list_index_points = [_ for _ in range(0, len(variables_in_the_list_points))]
-        random.shuffle(list_index_points)
-        self.copy_variables_in_the_list_points: list = variables_in_the_list_points.copy()
-        # Wymieszanie skopiowanej listy, żeby na pewno nie było powtarzalności
-        random.shuffle(self.copy_variables_in_the_list_points)
-        for index in list_index_points:
-            # Jeśli nastąpi, mutacja wybierze jedną z kopii zmiennych punktów i w podanym indeksie wstawi ją i usunie z
-            # kopii zmiennych punktów
-            if mutation_probability >= random.randint(0, 100):
-                x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
-                self.child[index] = self.copy_variables_in_the_list_points[x]
-                self.copy_variables_in_the_list_points.remove(x)
-            else:
-                parent_part1 = self.check_parent(parent1)
-                parent_part2 = self.check_parent(parent2)
-                if parent_part1 and parent_part2:
-                    if 1 == random.randint(1, 2):
-                        self.child[index] = parent_part1
-                        self.copy_variables_in_the_list_points.remove(parent_part1)
-                    else:
-                        self.child[index] = parent_part2
-                        self.copy_variables_in_the_list_points.remove(parent_part2)
-                elif parent_part1:
-                    self.child[index] = parent_part1
-                    self.copy_variables_in_the_list_points.remove(parent_part1)
-                elif parent_part2:
-                    self.child[index] = parent_part2
-                    self.copy_variables_in_the_list_points.remove(parent_part2)
-                else:
+    def __init__(self, variables_in_the_list_points: list, first_point: Point, last_point: Point, parent1=None,
+                 parent2=None, mutation_probability=3, is_first_population=False):
+        if parent1 is None or parent2 is None:
+            parent1 = []
+            parent2 = []
+        if is_first_population:
+            self.first_population(variables_in_the_list_points, first_point, last_point)
+        else:
+            self.child: list = [_ for _ in range(0, len(variables_in_the_list_points))]
+            list_index_points = [_ for _ in range(0, len(variables_in_the_list_points))]
+            random.shuffle(list_index_points)
+            self.copy_variables_in_the_list_points: list = variables_in_the_list_points.copy()
+            # Wymieszanie skopiowanej listy, żeby na pewno nie było powtarzalności
+            random.shuffle(self.copy_variables_in_the_list_points)
+            for index in list_index_points:
+                # Jeśli nastąpi, mutacja wybierze jedną z kopii zmiennych punktów i w podanym indeksie wstawi
+                # ją i usunie z kopii zmiennych punktów
+                if mutation_probability >= random.randint(0, 100):
                     x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
                     self.child[index] = self.copy_variables_in_the_list_points[x]
                     self.copy_variables_in_the_list_points.remove(x)
+                else:
+                    parent_part1 = self.check_parent(parent1)
+                    parent_part2 = self.check_parent(parent2)
+                    if parent_part1 and parent_part2:
+                        if 1 == random.randint(1, 2):
+                            self.child[index] = parent_part1
+                            self.copy_variables_in_the_list_points.remove(parent_part1)
+                        else:
+                            self.child[index] = parent_part2
+                            self.copy_variables_in_the_list_points.remove(parent_part2)
+                    elif parent_part1:
+                        self.child[index] = parent_part1
+                        self.copy_variables_in_the_list_points.remove(parent_part1)
+                    elif parent_part2:
+                        self.child[index] = parent_part2
+                        self.copy_variables_in_the_list_points.remove(parent_part2)
+                    else:
+                        x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
+                        self.child[index] = self.copy_variables_in_the_list_points[x]
+                        self.copy_variables_in_the_list_points.remove(x)
+            self.child.insert(0, first_point)
+            self.child.append(last_point)
+
+    def first_population(self, variables_in_the_list_points, first_point, last_point):
+        self.child = variables_in_the_list_points.copy()
+        random.shuffle(self.child)
         self.child.insert(0, first_point)
         self.child.append(last_point)
 
@@ -85,13 +97,13 @@ class SolutionExample:
             else:
                 distance = self.child[i].distance_to_next_point(self.child[i + 1].get_x(),
                                                                 self.child[i + 1].get_y())
-            print(distance)
             all_distance += distance
         return all_distance
 
     # Funkcja zwraca nową listę, nową próbę rozwiązania, dziecko tych rodziców
     def get_child(self):
-        return self.child
+        child_with_evaluation = (self.child, self.evaluation_child())
+        return child_with_evaluation
 
 
 # Tutaj są, generowane kolejne generacje
@@ -107,15 +119,19 @@ class Generation:
 
 # Tutaj jest, generowana cała pierwsza generacja
 class FirstGeneration:
-    def __init__(self, variables_in_the_list_points, population):
-        self.list_first_generation = []
+    def __init__(self, variables_in_the_list_points, first_point, last_point, population, how_many_we_choose_the_best):
+        list_first_generation = []
         for _ in range(0, population):
-            new_shuffled_list = variables_in_the_list_points.copy()
-            random.shuffle(new_shuffled_list)
-            self.list_first_generation.append(new_shuffled_list)
+            new_solution_example: tuple = SolutionExample(variables_in_the_list_points=variables_in_the_list_points,
+                                                          first_point=first_point, last_point=last_point,
+                                                          is_first_population=True).get_child()
+            list_first_generation.append(new_solution_example)
+        list_first_generation.sort(key=lambda x: x[1])
+        self.list_the_best_first_generation = list_first_generation[0:how_many_we_choose_the_best]
+        list_first_generation.clear()
 
     def get_the_best_children(self):
-        return self.list_first_generation
+        return self.list_the_best_first_generation
 
 
 # Generuje początkowy problem
@@ -126,7 +142,6 @@ def generate_points_list(how_many_points):
         list_points.append(point)
         print(point.get_x(), point.get_y())
     return list_points
-
 
 # TODO: w pierwszej generacji nie zawsze zaczyna od tych głównych punktów
 # TODO: wybieranie najlepszych dzieci, trzeba zrobić we wszystkich klasach generacji
