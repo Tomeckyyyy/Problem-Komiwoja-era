@@ -30,8 +30,8 @@ class Point:
 # Klasa, która reprezentuje pojedynczą próbę rozwiązania
 class SolutionExample:
     # Tworzenie instancji następuje przez stworzenie dziecka dwóch rodziców.
-    def __init__(self, variables_in_the_list_points: list, first_point: Point, last_point: Point, parent1=None,
-                 parent2=None, mutation_probability=3, is_first_population=False):
+    def __init__(self, variables_in_the_list_points: list, first_point: Point, last_point: Point, mutation_probability,
+                 parent1=None, parent2=None, is_first_population=False):
         if parent1 is None or parent2 is None:
             parent1 = []
             parent2 = []
@@ -50,7 +50,7 @@ class SolutionExample:
                 if mutation_probability >= random.randint(0, 100):
                     x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
                     self.child[index] = self.copy_variables_in_the_list_points[x]
-                    self.copy_variables_in_the_list_points.remove(x)
+                    self.copy_variables_in_the_list_points.remove(self.copy_variables_in_the_list_points[x])
                 else:
                     parent_part1 = self.check_parent(parent1)
                     parent_part2 = self.check_parent(parent2)
@@ -106,32 +106,32 @@ class SolutionExample:
         return child_with_evaluation
 
 
-# Tutaj są, generowane kolejne generacje
-class Generation:
-    def __init__(self, list_the_best_older_generation):
-        self.list_the_best_children = []
-        for _ in list_the_best_older_generation:
-            continue
-
-    def get_the_best_children(self):
-        return self.list_the_best_children
-
-
 # Tutaj jest, generowana cała pierwsza generacja
-class FirstGeneration:
-    def __init__(self, variables_in_the_list_points, first_point, last_point, population, how_many_we_choose_the_best):
-        list_first_generation = []
-        for _ in range(0, population):
-            new_solution_example: tuple = SolutionExample(variables_in_the_list_points=variables_in_the_list_points,
-                                                          first_point=first_point, last_point=last_point,
-                                                          is_first_population=True).get_child()
-            list_first_generation.append(new_solution_example)
-        list_first_generation.sort(key=lambda x: x[1])
-        self.list_the_best_first_generation = list_first_generation[0:how_many_we_choose_the_best]
-        list_first_generation.clear()
+class Generation:
+    def __init__(self, variables_in_the_list_points, first_point, last_point, population, how_many_we_choose_the_best,
+                 is_first_generation, mutation_probability: int, the_best_older_generation=None):
+        self.list_the_best_generation = []
+        list_generation = []
+        if is_first_generation:
+            for _ in range(0, population):
+                new_solution_example: tuple = SolutionExample(variables_in_the_list_points, first_point, last_point,
+                                                              mutation_probability,
+                                                              is_first_population=True).get_child()
+                list_generation.append(new_solution_example)
+        else:
+            for _ in range(0, population):
+                # TODO: Zobacz czy tu nie ma za dużo dżezu, może trzeba odjąć 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                parent1 = the_best_older_generation[random.randint(0, how_many_we_choose_the_best-1)][0]
+                parent2 = the_best_older_generation[random.randint(0, how_many_we_choose_the_best-1)][0]
+                new_solution_example: tuple = SolutionExample(variables_in_the_list_points, first_point, last_point,
+                                                              mutation_probability, parent1, parent2, False).get_child()
+                list_generation.append(new_solution_example)
+        list_generation.sort(key=lambda x: x[1])
+        self.list_the_best_generation = list_generation[0:how_many_we_choose_the_best]
+        list_generation.clear()
 
     def get_the_best_children(self):
-        return self.list_the_best_first_generation
+        return self.list_the_best_generation
 
 
 # Generuje początkowy problem
