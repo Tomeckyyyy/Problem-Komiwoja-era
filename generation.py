@@ -31,62 +31,64 @@ class Point:
 class SolutionExample:
     # Tworzenie instancji następuje przez stworzenie dziecka dwóch rodziców.
     def __init__(self, variables_in_the_list_points: list, first_point: Point, last_point: Point, mutation_probability,
-                 parent1=None, parent2=None, is_first_population=False):
-        if parent1 is None or parent2 is None:
-            parent1 = []
-            parent2 = []
+                 parent1=None, parent2=None, is_first_population=False, is_pmx_algorithm=True):
+        self.parent1 = parent1
+        self.parent2 = parent2
+        self.variables_in_the_list_points: list = variables_in_the_list_points.copy()
+        self.len_of_variable_point = len(variables_in_the_list_points)
+        # Jeśli to jest pierwsza generacja, wszystko jest totalnie losowe i po prostu algorytm miesza listę
         if is_first_population:
-            self.first_population(variables_in_the_list_points, first_point, last_point)
+            self.first_population(first_point, last_point)
+        # Jeśli nie jest to pierwsza generacja algorytm tworzy dzieci za pomocą jednego z algorytmów
         else:
-            self.child: list = [_ for _ in range(0, len(variables_in_the_list_points))]
-            list_index_points = [_ for _ in range(0, len(variables_in_the_list_points))]
-            random.shuffle(list_index_points)
-            self.copy_variables_in_the_list_points: list = variables_in_the_list_points.copy()
-            # Wymieszanie skopiowanej listy, żeby na pewno nie było powtarzalności
-            random.shuffle(self.copy_variables_in_the_list_points)
-            for index in list_index_points:
-                # Jeśli nastąpi, mutacja wybierze jedną z kopii zmiennych punktów i w podanym indeksie wstawi
-                # ją i usunie z kopii zmiennych punktów
-                if mutation_probability >= random.randint(0, 100):
-                    x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
-                    self.child[index] = self.copy_variables_in_the_list_points[x]
-                    self.copy_variables_in_the_list_points.remove(self.copy_variables_in_the_list_points[x])
-                else:
-                    parent_part1 = self.check_parent(parent1)
-                    parent_part2 = self.check_parent(parent2)
-                    if parent_part1 and parent_part2:
-                        if 1 == random.randint(1, 2):
-                            self.child[index] = parent_part1
-                            self.copy_variables_in_the_list_points.remove(parent_part1)
-                        else:
-                            self.child[index] = parent_part2
-                            self.copy_variables_in_the_list_points.remove(parent_part2)
-                    elif parent_part1:
-                        self.child[index] = parent_part1
-                        self.copy_variables_in_the_list_points.remove(parent_part1)
-                    elif parent_part2:
-                        self.child[index] = parent_part2
-                        self.copy_variables_in_the_list_points.remove(parent_part2)
-                    else:
-                        x = random.randint(0, len(self.copy_variables_in_the_list_points) - 1)
-                        self.child[index] = self.copy_variables_in_the_list_points[x]
-                        self.copy_variables_in_the_list_points.remove(x)
+            self.child: list = [_ for _ in range(0, self.len_of_variable_point)]
+            if is_pmx_algorithm:
+                self.partially_mapped_crossover()
+            else:
+                self.order_crossover()
+            # Mutacja występuje po krzyżowaniu, metodą zamiany dwóch losowo wybranych punktów
+            if mutation_probability >= random.randint(0, 100):
+                # TODO: Zmienić nazwy tych zmiennych
+                p = random.randint(0, len(self.child) - 1)
+                l = random.randint(0, len(self.child) - 1)
+                child_p = self.child[p]
+                child_l = self.child[l]
+                self.child[p] = child_l
+                self.child[l] = child_p
             self.child.insert(0, first_point)
             self.child.append(last_point)
 
-    def first_population(self, variables_in_the_list_points, first_point, last_point):
-        self.child = variables_in_the_list_points.copy()
+    def partially_mapped_crossover(self):
+        while True:
+            randint_1 = random.randint(0, self.len_of_variable_point - 1)
+            randint_2 = random.randint(0, self.len_of_variable_point - 1)
+            if randint_1 != randint_2:
+                break
+        # wyciąga z pierwszego lub drugiego rodzica część trasy
+        index_start_of_section = min(randint_1, randint_2)
+        index_end_of_section = max(randint_1, randint_2)
+        section_of_parent_1 = self.parent1[index_start_of_section: index_end_of_section]
+        # !!!!!!!!!!! tutaj tą pętle trzeba mieć na oku, może być tak, że nie dochodzi do ostatniego indeksu!!!!!!!!!!!
+        for i in range(index_start_of_section, index_end_of_section):
+            self.child[i] = section_of_parent_1[i - index_start_of_section]
+            self.variables_in_the_list_points.remove(self.child[i])
+        for i in range(len(self.child)):
+            if isinstance(self.child[i], int):
+                for point_from_variable_points in self.variables_in_the_list_points:
+                    if point_from_variable_points == self.parent2[i]:
+                        self.child[i] = self.parent2[i]
+        for i in range(len(self.child)):
+            if isinstance(self.child[i], int):
+                self.child[i] = self.variables_in_the_list_points.pop(0)
+
+    def order_crossover(self):
+        self.child = []
+
+    def first_population(self, first_point, last_point):
+        self.child = self.variables_in_the_list_points.copy()
         random.shuffle(self.child)
         self.child.insert(0, first_point)
         self.child.append(last_point)
-
-    # Sprawdza, czy rodzic ma dozwolony ruch dla tego dziecka
-    def check_parent(self, parent):
-        for single_point_list_point in self.copy_variables_in_the_list_points:
-            for single_point_parent in parent:
-                if single_point_list_point == single_point_parent:
-                    return single_point_parent
-        return False
 
     # Funkcja, która oblicza długość całej drogi
     def evaluation_child(self):
@@ -109,22 +111,26 @@ class SolutionExample:
 # Tutaj jest, generowana cała pierwsza generacja
 class Generation:
     def __init__(self, variables_in_the_list_points, first_point, last_point, population, how_many_we_choose_the_best,
-                 is_first_generation, mutation_probability: int, the_best_older_generation=None):
+                 is_first_generation, mutation_probability: int, the_best_older_generation=None, is_pmx_algorithm=True):
         self.list_the_best_generation = []
         list_generation = []
         if is_first_generation:
             for _ in range(0, population):
                 new_solution_example: tuple = SolutionExample(variables_in_the_list_points, first_point, last_point,
-                                                              mutation_probability,
-                                                              is_first_population=True).get_child()
+                                                              mutation_probability, is_first_population=True,
+                                                              is_pmx_algorithm=is_pmx_algorithm).get_child()
                 list_generation.append(new_solution_example)
         else:
             for _ in range(0, population):
-                # TODO: Zobacz czy tu nie ma za dużo dżezu, może trzeba odjąć 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                parent1 = the_best_older_generation[random.randint(0, how_many_we_choose_the_best-1)][0]
-                parent2 = the_best_older_generation[random.randint(0, how_many_we_choose_the_best-1)][0]
+                parent1: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0]
+                parent2: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0]
+                del parent1[0]
+                del parent1[-1]
+                del parent2[0]
+                del parent2[-1]
                 new_solution_example: tuple = SolutionExample(variables_in_the_list_points, first_point, last_point,
-                                                              mutation_probability, parent1, parent2, False).get_child()
+                                                              mutation_probability, parent1, parent2, False,
+                                                              is_pmx_algorithm).get_child()
                 list_generation.append(new_solution_example)
         list_generation.sort(key=lambda x: x[1])
         self.list_the_best_generation = list_generation[0:how_many_we_choose_the_best]
@@ -142,6 +148,3 @@ def generate_points_list(how_many_points):
         list_points.append(point)
         print(point.get_x(), point.get_y())
     return list_points
-
-# TODO: w pierwszej generacji nie zawsze zaczyna od tych głównych punktów
-# TODO: wybieranie najlepszych dzieci, trzeba zrobić we wszystkich klasach generacji
