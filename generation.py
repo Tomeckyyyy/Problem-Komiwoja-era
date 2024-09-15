@@ -32,8 +32,9 @@ class SolutionExample:
     # Tworzenie instancji następuje przez stworzenie dziecka dwóch rodziców.
     def __init__(self, variables_in_the_list_points: list, first_point: Point, last_point: Point, mutation_probability,
                  parent1=None, parent2=None, is_first_population=False, is_pmx_algorithm=True):
-        self.parent1 = parent1
-        self.parent2 = parent2
+        if parent1 is not None and parent2 is not None:
+            self.parent1 = parent1
+            self.parent2 = parent2
         self.variables_in_the_list_points: list = variables_in_the_list_points.copy()
         self.len_of_variable_point = len(variables_in_the_list_points)
         # Jeśli to jest pierwsza generacja, wszystko jest totalnie losowe i po prostu algorytm miesza listę
@@ -68,15 +69,20 @@ class SolutionExample:
         index_start_of_section = min(randint_1, randint_2)
         index_end_of_section = max(randint_1, randint_2)
         section_of_parent_1 = self.parent1[index_start_of_section: index_end_of_section]
+        # Pętla która kopiuje sekcje.
         # !!!!!!!!!!! tutaj tą pętle trzeba mieć na oku, może być tak, że nie dochodzi do ostatniego indeksu!!!!!!!!!!!
         for i in range(index_start_of_section, index_end_of_section):
             self.child[i] = section_of_parent_1[i - index_start_of_section]
             self.variables_in_the_list_points.remove(self.child[i])
+        # Pętla która, kopiuje po kolei nieuzupełnione punkty z drugiego rodzica
         for i in range(len(self.child)):
             if isinstance(self.child[i], int):
                 for point_from_variable_points in self.variables_in_the_list_points:
                     if point_from_variable_points == self.parent2[i]:
                         self.child[i] = self.parent2[i]
+                        self.variables_in_the_list_points.remove(point_from_variable_points)
+
+        # Pętla która, kopiuje po kolei nieuzupełnione punkty
         for i in range(len(self.child)):
             if isinstance(self.child[i], int):
                 self.child[i] = self.variables_in_the_list_points.pop(0)
@@ -122,12 +128,17 @@ class Generation:
                 list_generation.append(new_solution_example)
         else:
             for _ in range(0, population):
-                parent1: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0]
-                parent2: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0]
+                parent1: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0].copy()
+                parent2: list = the_best_older_generation[random.randint(0, how_many_we_choose_the_best - 1)][0].copy()
                 del parent1[0]
                 del parent1[-1]
                 del parent2[0]
                 del parent2[-1]
+                # print("#####################")
+                # print(len(parent1))
+                # print("TATATAT")
+                # print(len(parent2))
+                # print("#####################")
                 new_solution_example: tuple = SolutionExample(variables_in_the_list_points, first_point, last_point,
                                                               mutation_probability, parent1, parent2, False,
                                                               is_pmx_algorithm).get_child()

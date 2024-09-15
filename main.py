@@ -7,11 +7,11 @@ import generation
 # how_many_we_choose_the_best = input ("Ilu najlepszych przekazujemy do tworzenia następnej generacji?")
 # mutation_probability = input ("Jakie prawdopodobieństwo mutacji? (w procentach)")
 # number_of_generations = input ("Jaka ma być maksymalna liczba generacji?")
-how_many_points = 10
+how_many_points = 60
 population_size = 300
 how_many_we_choose_the_best = 30
 mutation_probability = 3
-number_of_generations = 300
+number_of_generations = 500
 is_pmx_algorithm = True
 
 # Generowanie losowej listy punktów
@@ -33,6 +33,14 @@ for i in range(number_of_generations):
                                                       mutation_probability, generation_the_best_child,
                                                       is_pmx_algorithm).get_the_best_children()
     list_of_the_best_value_from_single_generation.append(generation_the_best_child[0][1])
+    if i % 100 == 0:
+        for point in generation_the_best_child[0][0]:
+            listX.append(point.get_x())
+            listY.append(point.get_y())
+        plt.plot(listX, listY, 'ro', listX, listY, "b")
+        plt.show()
+        listX.clear()
+        listY.clear()
 
 for point in generation_the_best_child[0][0]:
     listX.append(point.get_x())
