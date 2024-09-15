@@ -74,6 +74,19 @@ class SolutionExample:
         for i in range(index_start_of_section, index_end_of_section):
             self.child[i] = section_of_parent_1[i - index_start_of_section]
             self.variables_in_the_list_points.remove(self.child[i])
+        self.copying_the_uncompleted_points()
+
+    def order_crossover(self):
+        while True:
+            randint_1 = random.randint(0, self.len_of_variable_point - 1)
+            randint_2 = random.randint(0, self.len_of_variable_point - 1)
+            if randint_1 != randint_2:
+                break
+        self.copying_the_uncompleted_points()
+
+    # Funkcja która, kopiuje po kolei nieuzupełnione punkty z drugiego rodzica oraz kopiuje po kolei nieuzupełnione
+    # punkty
+    def copying_the_uncompleted_points(self):
         # Pętla która, kopiuje po kolei nieuzupełnione punkty z drugiego rodzica
         for i in range(len(self.child)):
             if isinstance(self.child[i], int):
@@ -86,9 +99,6 @@ class SolutionExample:
         for i in range(len(self.child)):
             if isinstance(self.child[i], int):
                 self.child[i] = self.variables_in_the_list_points.pop(0)
-
-    def order_crossover(self):
-        self.child = []
 
     def first_population(self, first_point, last_point):
         self.child = self.variables_in_the_list_points.copy()
